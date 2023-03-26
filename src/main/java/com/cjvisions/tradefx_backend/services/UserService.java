@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,6 +21,9 @@ public class UserService {
 
     @Autowired
     JwtUtil jwtUtil;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
 
     private UserRegistrationRepository userRegistrationRepository;
@@ -52,6 +56,10 @@ public class UserService {
 
         if (existingUser == null){
             return new AuthResponse("","");
+        }
+
+        if (!passwordEncoder.matches(user.getPassword(), existingUser.getPassword())){
+            return new AuthResponse(user.getEmail(), "Invalid credentials passed");
         }
 
         try {

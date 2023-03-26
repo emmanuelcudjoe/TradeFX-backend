@@ -23,6 +23,9 @@ public class Provider {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "contact")
+    private String contact;
+
     @Column(name = "currencies")
     @OneToMany(targetEntity = Currency.class, orphanRemoval = false, cascade = CascadeType.DETACH)
     private Set<Currency> currencies;

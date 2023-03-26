@@ -35,8 +35,12 @@ public class UserRegistrationInfo {
     @Column(name = "password")
     private String password;
 
-    @OneToMany(orphanRemoval = true, mappedBy = "userRegistrationInfo", fetch = FetchType.LAZY, targetEntity = Bank.class)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "user", fetch = FetchType.LAZY, targetEntity = Bank.class)
     private Set<Bank> bankAccounts;
+
+    public void addBank(Bank bank){
+        this.getBankAccounts().add(bank);
+    }
 
     @Override
     public String toString(){

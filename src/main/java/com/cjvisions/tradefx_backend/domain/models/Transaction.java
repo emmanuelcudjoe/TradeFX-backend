@@ -1,7 +1,7 @@
 package com.cjvisions.tradefx_backend.domain.models;
 
-
 import com.cjvisions.tradefx_backend.domain.constants.TransactionStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
@@ -14,7 +14,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @ToString
-@Table(name = "provider")
+@Table(name = "transaction")
 public class Transaction {
 
     @Id
@@ -22,13 +22,32 @@ public class Transaction {
     @GenericGenerator(name = "uuid", strategy = "uuid2")
     private String id;
 
-    @OneToOne(targetEntity = Bank.class)
+    @JsonIgnore
+    @OneToOne(targetEntity = Bank.class, cascade = CascadeType.ALL)
+    @JoinColumn(name = "bank_id", referencedColumnName = "id")
     private Bank bank;
 
-    @OneToOne(targetEntity = UserRegistrationInfo.class)
+    @JsonIgnore
+    @OneToOne(targetEntity = UserRegistrationInfo.class, cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
     private UserRegistrationInfo user;
 
-    private LocalDate transactionDate;
+//    @OneToOne(targetEntity = Provider.class)
+//    @JoinColumn(name = "provider_id")
+//    private Provider provider;
 
+    @Column(name = "provider")
+    private String provider;
+
+    @Column(name = "createdAt")
+    private LocalDate createdAt;
+
+    @Column(name = "updatedAt")
+    private LocalDate updatedAt;
+
+    @Column(name = "buying_amount")
+    private Long amount;
+
+    @Enumerated(EnumType.STRING)
     private TransactionStatus status;
 }

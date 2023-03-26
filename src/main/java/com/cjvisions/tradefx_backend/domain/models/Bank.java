@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.GenericGenerator;
 
 @Entity
@@ -35,8 +36,9 @@ public class Bank {
     @Column(name = "contact")
     private String contact;
 
-    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL,  targetEntity = UserRegistrationInfo.class)
+//    @Cascade(org.hibernate.annotations.CascadeType.MERGE)
+    @ManyToOne(fetch = FetchType.LAZY,  targetEntity = UserRegistrationInfo.class)
     @JoinColumn(name = "user_accounts")
-    private UserRegistrationInfo userRegistrationInfo;
+    private UserRegistrationInfo user;
 
 }
