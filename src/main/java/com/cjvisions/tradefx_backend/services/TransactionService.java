@@ -22,6 +22,8 @@ import java.util.List;
 @Service
 public class TransactionService {
 
+    private final int RATE = 10;
+
     @Autowired
     private TransactionRepository transactionRepository;
 
@@ -36,6 +38,7 @@ public class TransactionService {
 
     @Transactional
     public Transaction saveTransaction(UserTransactionDTO transaction){
+
         var existingUser = userRegistrationRepository.findUserByEmail(transaction.userEmail());
         var existingBank = bankRepository.findByAccountNumber(transaction.accountNumber());
 //        Provider provider;
@@ -51,7 +54,7 @@ public class TransactionService {
 
         var newTransaction = new Transaction();
         newTransaction.setUser(existingUser);
-        newTransaction.setAmount(transaction.amount());
+        newTransaction.setAmount(transaction.amount() * RATE);
         newTransaction.setBank(bank);
         newTransaction.setCreatedAt(LocalDate.now());
         newTransaction.setUpdatedAt(LocalDate.now());
