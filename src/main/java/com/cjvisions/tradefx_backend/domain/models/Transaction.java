@@ -24,7 +24,7 @@ public class Transaction {
 
     @JsonIgnore
     @OneToOne(targetEntity = Bank.class, cascade = CascadeType.ALL)
-    @JoinColumn(name = "bank_id", referencedColumnName = "id")
+    @JoinColumn(name = "bank_id")
     private Bank bank;
 
     @JsonIgnore
@@ -46,7 +46,7 @@ public class Transaction {
     private LocalDate updatedAt;
 
     @Column(name = "buying_amount")
-    private Long amount;
+    private Double amount;
 
     @Enumerated(EnumType.STRING)
     private TransactionStatus status;

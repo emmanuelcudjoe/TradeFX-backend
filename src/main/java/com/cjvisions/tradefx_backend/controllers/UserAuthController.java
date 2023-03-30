@@ -10,9 +10,7 @@ import com.cjvisions.tradefx_backend.services.UserService;
 import com.cjvisions.tradefx_backend.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
@@ -37,19 +35,22 @@ public class UserAuthController {
     JwtUtil jwtUtil;
 
     @Autowired
-    private UserLoginRepository userLoginRepository;
+    private UserRegistrationRepository userLoginRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
 
     @PostMapping("/register")
-    public String registerUser(@RequestBody @Validated  UserRegistrationDetails userRegistrationDetails, BindingResult result){
+    public String registerUser(
+            @RequestBody @Validated  UserRegistrationDetails userRegistrationDetails,
+            BindingResult result){
         System.out.println(userRegistrationDetails);
         System.out.println(result);
 
         var existingUser = userLoginRepository.findByEmail(userRegistrationDetails.email());
 
         if (existingUser != null){
+            System.out.println("User already exists");
             return "User already exists";
         }
 
@@ -60,7 +61,6 @@ public class UserAuthController {
         userRegistrationInfo.setPassword(passwordEncoder.encode(userRegistrationDetails.password()));
 
         if (userService.registerUser(userRegistrationInfo)){
-
             return "Done";
         }
         return "User not saved";

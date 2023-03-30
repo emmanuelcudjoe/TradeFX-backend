@@ -1,6 +1,7 @@
 package com.cjvisions.tradefx_backend.services;
 
 import com.cjvisions.tradefx_backend.domain.constants.TransactionStatus;
+import com.cjvisions.tradefx_backend.domain.dto.TransactionResponse;
 import com.cjvisions.tradefx_backend.domain.dto.UpdateTransactionStatusDTO;
 import com.cjvisions.tradefx_backend.domain.dto.UserTransactionDTO;
 import com.cjvisions.tradefx_backend.domain.dto.UserTransactionHistoryDTO;
@@ -17,12 +18,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class TransactionService {
 
-    private final int RATE = 10;
+    private final Double RATE = 10d;
 
     @Autowired
     private TransactionRepository transactionRepository;
@@ -37,9 +39,11 @@ public class TransactionService {
     private ProviderRepository providerRepository;
 
     @Transactional
-    public Transaction saveTransaction(UserTransactionDTO transaction){
+    public TransactionResponse saveTransaction(UserTransactionDTO transaction){
 
-        var existingUser = userRegistrationRepository.findUserByEmail(transaction.userEmail());
+        Double amount = transaction.amount() / RATE;
+
+        var existingUser = userRegistrationRepository.findByEmail(transaction.userEmail());
         var existingBank = bankRepository.findByAccountNumber(transaction.accountNumber());
 //        Provider provider;
         Bank bank = new Bank();
@@ -52,9 +56,21 @@ public class TransactionService {
             bank = existingBank;
         }
 
+        if (amount > bank.getBalance()){
+            return new TransactionResponse(400, "TRANSACTION ERROR!. The request amount exceeds your current balance in your account.");
+        }
+
+        if (amount > bank.getTransactionLimit()){
+            return new TransactionResponse(400, "TRANSACTION ERROR!. The request amount exceeds the daily limit.");
+        }
+
+        bank.setBalance(bank.getBalance() - amount);
+        bank = bankRepository.save(bank);
+
         var newTransaction = new Transaction();
         newTransaction.setUser(existingUser);
-        newTransaction.setAmount(transaction.amount() * RATE);
+
+        newTransaction.setAmount(amount);
         newTransaction.setBank(bank);
         newTransaction.setCreatedAt(LocalDate.now());
         newTransaction.setUpdatedAt(LocalDate.now());
@@ -65,12 +81,12 @@ public class TransactionService {
         if (savedTransaction != null){
             new UserSMSFeedback().sendMessageToUser(transaction.contact(),
                     "Your request has been received successfully. You will soon be notified about further developments");
-            return savedTransaction;
-        } else {
-            new UserSMSFeedback().sendMessageToUser(transaction.contact(),
-                    "Sorry, order could not be placed. Please wait while our technical team resolve the issue");
+            return new TransactionResponse(202, "Your request has been received successfully. You will soon be notified by text about further developments");
+
         }
-        return null;
+        new UserSMSFeedback().sendMessageToUser(transaction.contact(),
+                    "Sorry, request could not be processed. Please try again later while our technical team resolve the issue");
+        return new TransactionResponse(400, "TRANSACTION ERROR!. Sorry, request could not be processed. Please try again later while our technical team resolve the issue");
     }
 
     private Bank saveBank(Bank bank, UserTransactionDTO transaction, UserRegistrationInfo existingUser) {
@@ -81,6 +97,8 @@ public class TransactionService {
         bank.setAccountNumber(transaction.accountNumber());
         bank.setUser(existingUser);
         bank.setBranch(transaction.branchName());
+        bank.setBalance(300000.00);
+        bank.setTransactionLimit(5000.00);
         return bank;
 
     }
@@ -97,7 +115,8 @@ public class TransactionService {
                     transaction.getProvider(),
                     transaction.getBank().getBankName(),
                     transaction.getStatus().toString(),
-                    transaction.getCreatedAt());
+                    transaction.getCreatedAt(),
+                    transaction.getAmount());
         }).toList();
     }
 
@@ -114,9 +133,11 @@ public class TransactionService {
         switch (status.status()) {
             case "fulfilled":
                 existingTransaction.setStatus(TransactionStatus.FULFILLED);
-                new UserSMSFeedback().sendMessageToUser("+233504809836", "Transaction fulfilled. Account has been debited.");
                 new UserSMSFeedback().sendMessageToUser("+233504809836",
-                        "From "+existingTransaction.getBank().getBankName() + ". An amount of $40 has been credited to your account");
+                        "Transaction fulfilled. Account has been debited.");
+                new UserSMSFeedback().sendMessageToUser("+233504809836",
+                        "From "+existingTransaction.getBank().getBankName() +
+                                ". An amount of $40 has been credited to your account");
                 break ;
             case "pending":
                 existingTransaction.setStatus(TransactionStatus.PENDING);
@@ -136,5 +157,26 @@ public class TransactionService {
 
         return transactionRepository.save(existingTransaction);
 
+    }
+
+    public List<UserTransactionHistoryDTO> getAllUserTransactions(String userId) {
+        List<UserTransactionHistoryDTO> userTransactions = new ArrayList<>();
+        var transactions = transactionRepository.findAll();
+
+        if (transactions.size() > 0){
+            userTransactions = transactions
+                    .stream()
+                    .filter(transaction -> transaction.getUser().getId().equals(userId))
+                    .map(transaction -> new UserTransactionHistoryDTO(
+                            transaction.getId(),
+                            transaction.getProvider(),
+                            transaction.getBank().getBankName(),
+                            transaction.getStatus().toString(),
+                            transaction.getCreatedAt(),
+                            transaction.getAmount()
+                    )).toList();
+        }
+
+        return userTransactions;
     }
 }

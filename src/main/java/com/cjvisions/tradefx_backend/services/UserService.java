@@ -52,7 +52,7 @@ public class UserService {
 
     public AuthResponse getUserToken(UserLoginInfo user){
 
-        var existingUser = userRegistrationRepository.findUserByEmail(user.getEmail());
+        var existingUser = userRegistrationRepository.findByEmail(user.getEmail());
 
         if (existingUser == null){
             return new AuthResponse("","");

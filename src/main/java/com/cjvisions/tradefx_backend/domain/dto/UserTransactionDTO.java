@@ -9,7 +9,7 @@ public record UserTransactionDTO(
         String branchName,
         String contact,
         String providerName,
-        Long amount,
+        Double amount,
         String bank
         )
 {

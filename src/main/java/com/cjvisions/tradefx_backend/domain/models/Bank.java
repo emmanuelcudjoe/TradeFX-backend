@@ -36,9 +36,20 @@ public class Bank {
     @Column(name = "contact")
     private String contact;
 
+    @Column(name = "balance")
+    private Double balance;
+
+    @Column(name = "transaction_limit")
+    private Double transactionLimit;
+
 //    @Cascade(org.hibernate.annotations.CascadeType.MERGE)
     @ManyToOne(fetch = FetchType.LAZY,  targetEntity = UserRegistrationInfo.class)
     @JoinColumn(name = "user_accounts")
     private UserRegistrationInfo user;
 
+    @PrePersist
+    public void preInsert(){
+        this.setBalance(200000.00);
+        this.setTransactionLimit(500000.00);
+    }
 }
